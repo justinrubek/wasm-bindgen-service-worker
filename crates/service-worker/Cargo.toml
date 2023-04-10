@@ -1,0 +1,32 @@
+[package]
+name = "wasm-service-worker"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wasm-bindgen = "0.2.84"
+wasm-bindgen-futures = "0.4.34"
+js-sys = "0.3.61"
+
+[dependencies.web-sys]
+version = "0.3.4"
+features = [
+    "console",
+    "Document",
+    "Element",
+    "HtmlElement",
+    "Location",
+    "Navigator",
+    "Node",
+    "Window",
+    "RegistrationOptions",
+    "ServiceWorkerGlobalScope",
+    "ServiceWorkerRegistration",
+    "ServiceWorkerState",
+    "ServiceWorker",
+    "ServiceWorkerContainer",
+    "Url",
+]
