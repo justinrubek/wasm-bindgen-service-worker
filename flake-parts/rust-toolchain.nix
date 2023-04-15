@@ -9,15 +9,15 @@
     ];
 
     fenix-toolchain = inputs'.fenix.packages.combine ([
-      fenix-channel.rustc
-      fenix-channel.cargo
-      fenix-channel.clippy
-      fenix-channel.rust-analysis
-      fenix-channel.rust-src
-      fenix-channel.rustfmt
-      fenix-channel.llvm-tools-preview
-    ] ++ fenix-targets);
-
+        fenix-channel.rustc
+        fenix-channel.cargo
+        fenix-channel.clippy
+        fenix-channel.rust-analysis
+        fenix-channel.rust-src
+        fenix-channel.rustfmt
+        fenix-channel.llvm-tools-preview
+      ]
+      ++ fenix-targets);
   in rec {
     packages = {
       rust-toolchain = fenix-toolchain;

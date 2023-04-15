@@ -19,7 +19,6 @@
       inputs'.bomper.packages.cli
       # misc
       pkgs.miniserve
-
     ];
 
     # packages required for building the rust packages
