@@ -1,5 +1,5 @@
 [package]
-name = "wasm-service-worker"
+name = "service-worker-loader"
 version.workspace = true
 edition.workspace = true
 
