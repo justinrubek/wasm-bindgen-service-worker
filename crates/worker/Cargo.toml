@@ -3,6 +3,9 @@ name = "service-worker"
 version.workspace = true
 edition.workspace = true
 
+[lib]
+crate-type = ["cdylib"]
+
 [dependencies]
 anyhow.workspace = true
 js-sys = { workspace = true }
