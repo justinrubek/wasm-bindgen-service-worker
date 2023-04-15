@@ -39,7 +39,7 @@
         ];
       };
 
-      pname = "wasm-playground";
+      pname = "wasm-service-worker";
 
       nativeBuildInputs = withExtraPackages [];
       LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath nativeBuildInputs;
@@ -47,15 +47,38 @@
 
     deps-only = craneLib.buildDepsOnly ({} // common-build-args);
 
-    packages = {
-      default = packages.cli;
-      cli = craneLib.buildPackage ({
-          pname = "cli";
-          cargoArtifacts = deps-only;
-          cargoExtraArgs = "--bin cli";
-          meta.mainProgram = "cli";
-        }
-        // common-build-args);
+    packages = let
+      buildWasmPackage = {name}:
+        craneLib.mkCargoDerivation (let
+          # convert the name to underscored
+          underscore_name = pkgs.lib.strings.replaceStrings ["-"] ["_"] name;
+        in
+          {
+            pname = name;
+            cargoArtifacts = deps-only;
+            cargoExtraArgs = "-p ${name} --target wasm32-unknown-unknown";
+            doCheck = false;
+            doInstallCargoArtifacts = false;
+
+            buildPhaseCargoCommand = ''
+              cargoBuildLog=$(mktemp cargoBuildLogXXXX.json)
+              cargoWithProfile build -p ${name} --target wasm32-unknown-unknown --message-format json-render-diagnostics > $cargoBuildLog
+
+              ${pkgs.wasm-bindgen-cli}/bin/wasm-bindgen \
+                target/wasm32-unknown-unknown/release/${underscore_name}.wasm \
+                --out-dir $out \
+                --target web \
+            '';
+          }
+          // common-build-args);
+    in {
+      loader = buildWasmPackage {
+        name = "service-worker-loader";
+      };
+
+      worker = buildWasmPackage {
+        name = "service-worker";
+      };
 
       cargo-doc = craneLib.cargoDoc ({
           cargoArtifacts = deps-only;
@@ -92,14 +115,6 @@
       shellHook = ''
         ${config.pre-commit.installationScript}
       '';
-    };
-
-    apps = {
-      cli = {
-        type = "app";
-        program = pkgs.lib.getBin self'.packages.cli;
-      };
-      default = apps.cli;
     };
   };
 }

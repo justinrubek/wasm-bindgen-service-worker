@@ -151,7 +151,7 @@ pub async fn register_service_worker(
 
 // Called when the wasm module is instantiated
 #[wasm_bindgen(start)]
-fn main() -> Result<(), JsValue> {
+fn init() -> Result<(), JsValue> {
     // Use `web_sys`'s global `window` function to get a handle on the global
     // window object.
     // let service_worker_promise = register_service_worker(false);
