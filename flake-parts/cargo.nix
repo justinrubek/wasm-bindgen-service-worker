@@ -48,7 +48,10 @@
     deps-only = craneLib.buildDepsOnly ({} // common-build-args);
 
     packages = let
-      buildWasmPackage = {name}:
+      buildWasmPackage = {
+        name,
+        wasm-bindgen-target ? "web",
+      }:
         craneLib.mkCargoDerivation (let
           # convert the name to underscored
           underscore_name = pkgs.lib.strings.replaceStrings ["-"] ["_"] name;
@@ -67,7 +70,7 @@
               ${pkgs.wasm-bindgen-cli}/bin/wasm-bindgen \
                 target/wasm32-unknown-unknown/release/${underscore_name}.wasm \
                 --out-dir $out \
-                --target web \
+                --target ${wasm-bindgen-target} \
             '';
           }
           // common-build-args);
@@ -78,6 +81,7 @@
 
       worker = buildWasmPackage {
         name = "service-worker";
+        # wasm-bindgen-target = "no-modules";
       };
 
       cargo-doc = craneLib.cargoDoc ({

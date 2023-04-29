@@ -5,7 +5,7 @@ pub mod error;
 
 // Called when the wasm module is instantiated
 #[wasm_bindgen(start)]
-fn init() -> std::result::Result<(), JsValue> {
+fn init_worker() -> std::result::Result<(), JsValue> {
     let global = js_sys::global();
 
     if let Ok(true) = js_sys::Reflect::has(&global, &JsValue::from_str("ServiceWorkerGlobalScope"))
@@ -20,12 +20,20 @@ fn init() -> std::result::Result<(), JsValue> {
         global.set_oninstall(Some(on_install.as_ref().unchecked_ref()));
         global.set_onactivate(Some(on_activate.as_ref().unchecked_ref()));
 
-        // register callbacks
+        // register all the other callbacks
         let on_message = on_message(&global)?;
+        global.set_onmessage(Some(on_message.as_ref().unchecked_ref()));
+
+        // Ensure that the closures are not dropped before the service worker is terminated
+        // This is technically a memory leak, but I'm not sure that it matters in this case
+        on_install.forget();
+        on_activate.forget();
+        on_message.forget();
     } else {
         console::log_1(&JsValue::from_str("not in service worker"));
         return Err(error::Error::NotInServiceWorker.into());
     }
+
     Ok(())
 }
 
@@ -53,11 +61,11 @@ fn on_activate(
 
 /// Displays a message in the console when a message is received from the client
 fn on_message(
-    global: &ServiceWorkerGlobalScope,
+    _global: &ServiceWorkerGlobalScope,
 ) -> std::result::Result<Closure<dyn FnMut(web_sys::ExtendableMessageEvent)>, JsValue> {
     Ok(Closure::wrap(
         Box::new(move |event: web_sys::ExtendableMessageEvent| {
-            console::log_1(&event.data());
+            console::log_2(&JsValue::from_str("sw msg:"), &event.data());
         }) as Box<dyn FnMut(_)>,
     ))
 }
