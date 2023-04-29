@@ -149,9 +149,56 @@ pub async fn register_service_worker(
     Ok(Promise::resolve(&JsValue::from(service_worker)))
 }
 
+/// A more simple version of the above function that doesn't try to handle all the cases
+/// This just calls `navigator.service_worker.register` and returns the promise
+#[wasm_bindgen]
+pub async fn basic_register_service_worker(worker_url: String) -> Result<Promise, JsValue> {
+    console::log_1(&"registering service worker via wasm_bindgen".into());
+
+    let window = web_sys::window().expect("no global `window` exists");
+    let location = window.location();
+    let navigator = window.navigator();
+    let service_worker = navigator.service_worker();
+
+    let location_href = location.href().expect("no href found");
+    let url = web_sys::Url::new_with_base(&worker_url, &location_href)?;
+    let url = url.to_string().as_string().unwrap();
+
+    let mut opts = RegistrationOptions::new();
+    opts.scope("/");
+    console::log_2(
+        &"registering service worker with opts".into(),
+        &opts.clone().into(),
+    );
+
+    let registration_fut = service_worker.register_with_options(&url, &opts);
+    let registration_res = JsFuture::from(registration_fut).await?;
+    let registration = ServiceWorkerRegistration::from(registration_res);
+
+    let registered_worker = get_worker_from_reg(&registration)
+        .ok_or_else(|| JsValue::from_str("Service worker registration is not valid"))?;
+
+    console::log_2(
+        &"registered service worker".into(),
+        &registered_worker.clone().into(),
+    );
+
+    // Check to see if the registered worker is the same url
+    if registered_worker.script_url() != url {
+        console::log_1(&"registered worker is not the same url".into());
+
+        let update_fut = registration.update()?;
+        JsFuture::from(update_fut).await?;
+
+        console::log_1(&"service worker updated".into());
+    }
+
+    Ok(Promise::resolve(&JsValue::from(registered_worker)))
+}
+
 // Called when the wasm module is instantiated
 #[wasm_bindgen(start)]
-fn init() -> Result<(), JsValue> {
+fn init_wasm() -> Result<(), JsValue> {
     // Use `web_sys`'s global `window` function to get a handle on the global
     // window object.
     // let service_worker_promise = register_service_worker(false);
