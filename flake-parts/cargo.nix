@@ -71,6 +71,11 @@
                 target/wasm32-unknown-unknown/release/${underscore_name}.wasm \
                 --out-dir $out \
                 --target ${wasm-bindgen-target} \
+
+              ${pkgs.binaryen}/bin/wasm-opt \
+                -Oz \
+                --output $out/${underscore_name}_bg.wasm \
+                $out/${underscore_name}_bg.wasm
             '';
           }
           // common-build-args);
