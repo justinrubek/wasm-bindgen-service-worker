@@ -32,6 +32,9 @@
         ./flake-parts/cargo.nix
         ./flake-parts/rust-toolchain.nix
         ./flake-parts/pre-commit.nix
+        ./flake-parts/shells.nix
+        ./flake-parts/ci.nix
+        ./flake-parts/formatting.nix
       ];
     };
 }
