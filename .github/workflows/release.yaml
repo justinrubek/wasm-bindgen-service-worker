@@ -46,4 +46,5 @@ jobs:
           body_path: GITHUB_CHANGELOG.md
           tag_name: ${{ steps.get-version.outputs.version }}
           files: |
-            artifacts/*
+            artifacts/loader/*
+            artifacts/worker/*
