@@ -7,20 +7,6 @@
     self',
     ...
   }: let
-    devTools = [
-      # rust tooling
-      self'.packages.rust-toolchain
-      pkgs.cargo-audit
-      pkgs.cargo-udeps
-      pkgs.bacon
-      pkgs.wasm-bindgen-cli
-      # version control
-      pkgs.cocogitto
-      inputs'.bomper.packages.cli
-      # misc
-      pkgs.miniserve
-    ];
-
     # packages required for building the rust packages
     extraPackages = [
       pkgs.pkg-config
@@ -131,13 +117,8 @@
   in rec {
     inherit packages checks;
 
-    devShells.default = pkgs.mkShell rec {
-      packages = withExtraPackages devTools;
-      LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath packages;
-
-      shellHook = ''
-        ${config.pre-commit.installationScript}
-      '';
+    legacyPackages = {
+      cargoExtraPackages = extraPackages;
     };
   };
 }
