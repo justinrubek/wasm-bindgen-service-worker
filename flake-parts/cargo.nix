@@ -29,7 +29,7 @@
 
     craneLib = inputs.crane.lib.${system}.overrideToolchain self'.packages.rust-toolchain;
 
-    common-build-args = rec {
+    commonArgs = rec {
       src = inputs.nix-filter.lib {
         root = ../.;
         include = [
@@ -45,40 +45,54 @@
       LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath nativeBuildInputs;
     };
 
-    deps-only = craneLib.buildDepsOnly ({} // common-build-args);
+    deps-only = craneLib.buildDepsOnly ({} // commonArgs);
 
     packages = let
       buildWasmPackage = {
         name,
         wasm-bindgen-target ? "web",
-      }:
-        craneLib.mkCargoDerivation (let
-          # convert the name to underscored
-          underscore_name = pkgs.lib.strings.replaceStrings ["-"] ["_"] name;
-        in
-          {
-            pname = name;
-            cargoArtifacts = deps-only;
-            cargoExtraArgs = "-p ${name} --target wasm32-unknown-unknown";
+      }: let
+        underscore_name = pkgs.lib.strings.replaceStrings ["-"] ["_"] name;
+
+        wasmArgs =
+          commonArgs
+          // {
+            pname = "${commonArgs.pname}-deps-wasm";
+            cargoExtraArgs = "--package ${name}";
+            CARGO_BUILD_TARGET = "wasm32-unknown-unknown";
             doCheck = false;
-            doInstallCargoArtifacts = false;
+          };
 
-            buildPhaseCargoCommand = ''
-              cargoBuildLog=$(mktemp cargoBuildLogXXXX.json)
-              cargoWithProfile build -p ${name} --target wasm32-unknown-unknown --message-format json-render-diagnostics > $cargoBuildLog
-
-              ${pkgs.wasm-bindgen-cli}/bin/wasm-bindgen \
-                target/wasm32-unknown-unknown/release/${underscore_name}.wasm \
-                --out-dir $out \
-                --target ${wasm-bindgen-target} \
-
-              ${pkgs.binaryen}/bin/wasm-opt \
-                -Oz \
-                --output $out/${underscore_name}_bg.wasm \
-                $out/${underscore_name}_bg.wasm
-            '';
+        cargoArtifactsWasm = craneLib.buildDepsOnly (
+          wasmArgs
+          // {
           }
-          // common-build-args);
+        );
+
+        cargo-derivation = craneLib.buildPackage ({
+            cargoArtifacts = cargoArtifactsWasm;
+          }
+          // wasmArgs);
+
+        wasm-derivation = pkgs.stdenv.mkDerivation {
+          name = "${name}-wasm";
+          buildInputs = [pkgs.wasm-bindgen-cli];
+          nativeBuildInputs = [pkgs.binaryen];
+          src = "";
+          buildCommand = ''
+            ${pkgs.wasm-bindgen-cli}/bin/wasm-bindgen \
+              ${cargo-derivation}/lib/${underscore_name}.wasm \
+              --out-dir $out \
+              --target ${wasm-bindgen-target} \
+
+            ${pkgs.binaryen}/bin/wasm-opt \
+              -Oz \
+              --output $out/${underscore_name}_bg.wasm \
+              $out/${underscore_name}_bg.wasm
+          '';
+        };
+      in
+        wasm-derivation;
     in {
       loader = buildWasmPackage {
         name = "service-worker-loader";
@@ -92,7 +106,7 @@
       cargo-doc = craneLib.cargoDoc ({
           cargoArtifacts = deps-only;
         }
-        // common-build-args);
+        // commonArgs);
     };
 
     checks = {
@@ -100,19 +114,19 @@
           cargoArtifacts = deps-only;
           cargoClippyExtraArgs = "--all-features -- --deny warnings";
         }
-        // common-build-args);
+        // commonArgs);
 
       rust-fmt = craneLib.cargoFmt ({
-          inherit (common-build-args) src;
+          inherit (commonArgs) src;
         }
-        // common-build-args);
+        // commonArgs);
 
       rust-tests = craneLib.cargoNextest ({
           cargoArtifacts = deps-only;
           partitions = 1;
           partitionType = "count";
         }
-        // common-build-args);
+        // commonArgs);
     };
   in rec {
     inherit packages checks;
