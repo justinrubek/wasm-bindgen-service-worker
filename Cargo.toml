@@ -19,4 +19,4 @@ wasm-bindgen = "0.2.84"
 wasm-bindgen-futures = "0.4.34"
 
 [profile.release]
-# opt-level = 2 # fast and small wasm
+opt-level = 2 # fast and small wasm
