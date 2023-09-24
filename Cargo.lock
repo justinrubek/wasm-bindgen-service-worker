@@ -70,7 +70,7 @@ dependencies = [
 
 [[package]]
 name = "service-worker"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "js-sys",
@@ -83,7 +83,7 @@ dependencies = [
 
 [[package]]
 name = "service-worker-loader"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "js-sys",
  "wasm-bindgen",
