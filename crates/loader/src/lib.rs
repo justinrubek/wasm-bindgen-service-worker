@@ -35,6 +35,8 @@ async fn sleep(window: &web_sys::Window, ms: i32) -> Result<(), JsValue> {
 #[wasm_bindgen]
 pub async fn register_service_worker(
     worker_url: String,
+    worker_type: String,
+    worker_scope: String,
     _try_once: bool,
 ) -> Result<Promise, JsValue> {
     console::log_1(&"registering service worker via wasm_bindgen".into());
@@ -49,7 +51,9 @@ pub async fn register_service_worker(
     let url = url.to_string().as_string().unwrap();
 
     let mut opts = RegistrationOptions::new();
-    opts.scope("/");
+    opts.scope(&worker_scope);
+    opts.type_(worker_type.as_str());
+
     console::log_2(
         &"registering service worker with opts".into(),
         &opts.clone().into(),
@@ -152,7 +156,11 @@ pub async fn register_service_worker(
 /// A more simple version of the above function that doesn't try to handle all the cases
 /// This just calls `navigator.service_worker.register` and returns the promise
 #[wasm_bindgen]
-pub async fn basic_register_service_worker(worker_url: String) -> Result<Promise, JsValue> {
+pub async fn basic_register_service_worker(
+    worker_url: String,
+    worker_type: String,
+    worker_scope: String,
+) -> Result<Promise, JsValue> {
     console::log_1(&"registering service worker via wasm_bindgen".into());
 
     let window = web_sys::window().expect("no global `window` exists");
@@ -165,7 +173,9 @@ pub async fn basic_register_service_worker(worker_url: String) -> Result<Promise
     let url = url.to_string().as_string().unwrap();
 
     let mut opts = RegistrationOptions::new();
-    opts.scope("/");
+    opts.scope(&worker_scope);
+    opts.type_(worker_type.as_str());
+
     console::log_2(
         &"registering service worker with opts".into(),
         &opts.clone().into(),
